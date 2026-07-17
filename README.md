@@ -1,0 +1,2 @@
+# sinku
+SISTEM INFORMASI KEUANGAN SEKOLAH (SINKU) - MTs. Miftahul Falah 2

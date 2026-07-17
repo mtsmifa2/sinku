@@ -111,6 +111,10 @@
       text-align: center;
       color: #fff;
     }
+    .captcha-box {
+      background-color: #f1f3f5;
+      border: 1px dashed #ccc;
+    }
     .login-tabs .nav-link {
       border: none;
       color: #777;
@@ -383,7 +387,7 @@
   </div>
 
   <!-- LOGIN PAGE -->
-  <div id="loginPage" class="login-container d-none">
+ <div id="loginPage" class="login-container d-none">
     <div class="login-card">
       <div class="login-header position-relative">
         <button class="btn btn-sm btn-light position-absolute top-0 start-0 m-3 rounded-circle text-success" style="width: 35px; height: 35px;" onclick="hideLoginView()" title="Kembali ke Beranda">
@@ -394,26 +398,16 @@
         <p class="small mb-0 opacity-75">Sistem Informasi Keuangan MTs. Miftahul Falah 2</p>
       </div>
       
-      <ul class="nav nav-tabs login-tabs nav-fill" id="loginTab" role="tablist">
-        <li class="nav-item">
-          <button class="nav-link active" id="sign-in-tab" data-bs-toggle="tab" data-bs-target="#sign-in-panel" type="button" role="tab">Masuk</button>
-        </li>
-        <li class="nav-item">
-          <button class="nav-link" id="sign-up-tab" data-bs-toggle="tab" data-bs-target="#sign-up-panel" type="button" role="tab">Daftar Akun</button>
-        </li>
-      </ul>
-
-      <div class="tab-content p-4" id="loginTabContent">
+      <div class="p-4">
         <!-- FORM MASUK -->
-        <div class="tab-pane fade show active" id="sign-in-panel" role="tabpanel">
-          <form id="loginForm">
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">USERNAME</label>
-              <div class="input-group">
-                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
-                <input type="text" id="username" class="form-control bg-light border-start-0" placeholder="Masukkan username" required>
-              </div>
+        <form id="loginForm">
+          <div class="mb-3">
+            <label class="form-label small fw-bold text-muted">USERNAME</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+              <input type="text" id="username" class="form-control bg-light border-start-0" placeholder="Masukkan username" required>
             </div>
+          </div>
             <div class="mb-3">
               <label class="form-label small fw-bold text-muted">PASSWORD</label>
               <div class="input-group">
@@ -428,47 +422,13 @@
                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="generateCaptcha('login')"><i class="fa-solid fa-rotate-right"></i></button>
               </div>
               <input type="number" id="loginCaptchaAns" class="form-control" placeholder="Berapa hasil penjumlahan diatas?" required>
-            </div>
-            <button type="submit" class="btn btn-success w-full w-100 py-2.5 fw-bold" style="border-radius: 8px;">MASUK SISTEM <i class="fa-solid fa-right-to-bracket ms-1"></i></button>
-          </form>
-        </div>
-
-        <!-- FORM DAFTAR -->
-        <div class="tab-pane fade" id="sign-up-panel" role="tabpanel">
-          <form id="registerForm">
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">NAMA LENGKAP</label>
-              <input type="text" id="regNama" class="form-control bg-light" placeholder="Nama Lengkap Anda" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">USERNAME</label>
-              <input type="text" id="regUsername" class="form-control bg-light" placeholder="Buat username unik" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">PASSWORD</label>
-              <input type="password" id="regPassword" class="form-control bg-light" placeholder="Buat password aman" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label small fw-bold text-muted">PILIH AKSES ROLE</label>
-              <select id="regRole" class="form-select bg-light">
-                <option value="Staff">Staff (Tata Usaha/Wali Kelas)</option>
-                <option value="Admin">Admin (Bendahara Utama)</option>
-              </select>
-            </div>
-            <div class="mb-4">
-              <label class="form-label small fw-bold text-muted">VERIFIKASI KEAMANAN</label>
-              <div class="d-flex gap-2 align-items-center mb-2">
-                <div class="captcha-box" id="regCaptchaQuest">8 + 3 = ?</div>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="generateCaptcha('reg')"><i class="fa-solid fa-rotate-right"></i></button>
-              </div>
-              <input type="number" id="regCaptchaAns" class="form-control" placeholder="Berapa hasil penjumlahan diatas?" required>
-            </div>
-            <button type="submit" class="btn btn-success w-full w-100 py-2.5 fw-bold" style="border-radius: 8px;">DAFTAR SEKARANG <i class="fa-solid fa-user-plus ms-1"></i></button>
-          </form>
-        </div>
+          </div>
+          <button type="submit" class="btn btn-success w-full w-100 py-2.5 fw-bold" style="border-radius: 8px;">MASUK SISTEM <i class="fa-solid fa-right-to-bracket ms-1"></i></button>
+        </form>
       </div>
     </div>
   </div>
+
 
   <!-- MAIN APP PLATFORM -->
   <div id="mainApp" class="app-wrapper d-none">
@@ -941,10 +901,9 @@
     }
 
     // ==================== INITIALIZATION ====================
-    document.addEventListener('DOMContentLoaded', function() {
+   document.addEventListener('DOMContentLoaded', function() {
       // Pasang Event Listeners Form
       document.getElementById('loginForm').addEventListener('submit', e => { e.preventDefault(); handleLogin(); });
-      document.getElementById('registerForm').addEventListener('submit', e => { e.preventDefault(); handleRegister(); });
       document.getElementById('siswaForm').addEventListener('submit', e => { e.preventDefault(); submitSiswaForm(); });
       document.getElementById('pemasukanForm').addEventListener('submit', e => { e.preventDefault(); submitPemasukanForm(); });
       document.getElementById('pengeluaranForm').addEventListener('submit', e => { e.preventDefault(); submitPengeluaranForm(); });
@@ -977,7 +936,7 @@
         dbUsers = mockUsers.slice();
       }
 
-      generateCaptcha('login'); generateCaptcha('reg');
+      generateCaptcha('login');
       checkLoginState();
     });
 
@@ -1062,7 +1021,7 @@
           hideFullPageLoading();
           if (res.success) { Swal.fire('Berhasil', 'Anda bisa login sekarang.', 'success'); new bootstrap.Tab(document.getElementById('sign-in-tab')).show(); generateCaptcha('login'); }
           else { Swal.fire('Gagal', res.message, 'error'); generateCaptcha('reg'); }
-        }).catch(err => { hideFullPageLoading(); Swal.fire('Kesalahan', err.toString(), 'error'); generateCaptcha('reg'); });
+        }).catch(err => { hideFullPageLoading(); Swal.fire('Kesalahan Sistem', err.toString(), 'error'); generateCaptcha('login'); });
       }
     }
 

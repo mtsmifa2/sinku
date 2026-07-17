@@ -135,6 +135,38 @@
       user-select: none;
     }
 
+    /* PUBLIC HOME PAGE CSS */
+    .public-home {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e8f5e9 100%);
+      display: flex;
+      flex-direction: column;
+    }
+    .public-navbar {
+      background: #fff;
+      padding: 15px 5%;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .hero-section {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 50px 20px;
+    }
+    .search-box-container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      width: 100%;
+      max-width: 600px;
+      margin-top: 30px;
+    }
+
     /* APP LAYOUT */
     .app-wrapper {
       display: flex;
@@ -311,10 +343,52 @@
     <h6 class="fw-semibold text-dark text-center" id="fullPageLoaderMsg">Memproses...</h6>
   </div>
 
+  <!-- PUBLIC HOME PAGE (CEK STATUS SPP) -->
+  <div id="publicHome" class="public-home d-none">
+    <nav class="public-navbar">
+      <div class="d-flex align-items-center gap-2">
+        <img src="https://i.imgur.com/xZ9rTrR.png" height="40" alt="Logo">
+        <h5 class="fw-bold m-0 text-success d-none d-sm-block">MTs. Miftahul Falah 2</h5>
+      </div>
+      <button class="btn btn-outline-success fw-bold px-4 rounded-pill" onclick="showLoginView()">
+        <i class="fa-solid fa-right-to-bracket me-1"></i> Login Staff
+      </button>
+    </nav>
+    
+    <div class="hero-section">
+      <h2 class="fw-bold text-dark text-center mb-2">Portal Informasi Pembayaran</h2>
+      <p class="text-muted text-center mb-4">Cek status pembayaran SPP dan tagihan administrasi siswa secara mandiri.</p>
+      
+      <div class="search-box-container border">
+        <label class="form-label fw-bold text-muted small">NOMOR INDUK SISWA (NIS)</label>
+        <div class="input-group input-group-lg mb-4">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-id-card text-muted"></i></span>
+          <input type="text" id="searchNis" class="form-control bg-light border-start-0" placeholder="Ketikkan NIS Siswa..." required>
+          <button class="btn btn-success px-4" id="btnSearchNis" onclick="cekStatusPublic()"><i class="fa-solid fa-magnifying-glass"></i> Cari</button>
+        </div>
+        
+        <!-- Hasil pencarian -->
+        <div id="publicSearchResult">
+          <div class="text-center text-muted opacity-50 py-4">
+            <i class="fa-solid fa-file-invoice-dollar fa-3x mb-3"></i>
+            <p class="mb-0">Masukkan NIS untuk melihat riwayat pembayaran</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <footer class="text-center py-4 text-muted small mt-auto border-top bg-white">
+      &copy; 2026 Sistem Informasi Keuangan MTs. Miftahul Falah 2
+    </footer>
+  </div>
+
   <!-- LOGIN PAGE -->
   <div id="loginPage" class="login-container d-none">
     <div class="login-card">
-      <div class="login-header">
+      <div class="login-header position-relative">
+        <button class="btn btn-sm btn-light position-absolute top-0 start-0 m-3 rounded-circle text-success" style="width: 35px; height: 35px;" onclick="hideLoginView()" title="Kembali ke Beranda">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
         <img src="https://i.imgur.com/xZ9rTrR.png" height="70" class="mb-3" alt="Logo">
         <h5 class="fw-bold mb-1">SINKU</h5>
         <p class="small mb-0 opacity-75">Sistem Informasi Keuangan MTs. Miftahul Falah 2</p>
@@ -820,7 +894,7 @@
   <script>
     // ==================== KONEKSI GITHUB KE BACKEND GOOGLE SCRIPT ====================
     // Wajib: Isi URL di bawah dengan URL Deployment Web App Google Apps Script Anda.
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMR-8PmxTqiiyqaheysF2K5ocdNg6xhWnz5s8AApe9pCRRVJxayd2IUBY_nzQQjKLZ/exec'; // CONTOH: 'https://script.google.com/macros/s/AKfyc.../exec'
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwgicHDlreUcTE9vvl8E9WFqFbcgDaH7KyBSa8DKnOnbmsyV6CptT8QqBU6MhkbbA3o/exec'; // CONTOH: 'https://script.google.com/macros/s/AKfyc.../exec'
     
     // Jika SCRIPT_URL kosong, aplikasi akan berjalan pada Mode Simulasi (Mock Data)
     const USE_MOCK_DATA = SCRIPT_URL === '';
@@ -994,6 +1068,7 @@
 
     function checkLoginState() {
       if (currentUser) {
+        document.getElementById('publicHome').classList.add('d-none');
         document.getElementById('loginPage').classList.add('d-none');
         document.getElementById('mainApp').classList.remove('d-none');
         document.getElementById('displayUser').innerText = currentUser.fullname;
@@ -1006,12 +1081,111 @@
         showPage('dashboard');
       } else {
         document.getElementById('mainApp').classList.add('d-none');
-        document.getElementById('loginPage').classList.remove('d-none');
+        document.getElementById('loginPage').classList.add('d-none');
+        document.getElementById('publicHome').classList.remove('d-none');
         document.getElementById('username').value = ''; document.getElementById('password').value = '';
       }
     }
 
     function logout() { currentUser = null; sessionStorage.removeItem('sinkuUser'); checkLoginState(); }
+
+    // ==================== PUBLIC HOME (CEK STATUS) LOGIC ====================
+    function showLoginView() {
+      document.getElementById('publicHome').classList.add('d-none');
+      document.getElementById('loginPage').classList.remove('d-none');
+      generateCaptcha('login');
+    }
+
+    function hideLoginView() {
+      document.getElementById('loginPage').classList.add('d-none');
+      document.getElementById('publicHome').classList.remove('d-none');
+    }
+
+    function cekStatusPublic() {
+      var nis = document.getElementById('searchNis').value.trim();
+      if (!nis) return Swal.fire('Perhatian', 'Silakan masukkan NIS siswa terlebih dahulu.', 'warning');
+      
+      var btn = document.getElementById('btnSearchNis');
+      var resDiv = document.getElementById('publicSearchResult');
+      
+      // Loading State
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+      btn.disabled = true;
+      
+      if (USE_MOCK_DATA) {
+        setTimeout(() => {
+          var siswa = dbSiswa.find(x => x.nis === nis);
+          if (siswa) {
+            var riwayat = dbPemasukan.filter(x => x.nis === nis).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+            renderPublicResult(siswa, riwayat);
+          } else {
+            resDiv.innerHTML = '<div class="alert alert-danger py-2 text-center small mb-0"><i class="fa-solid fa-circle-exclamation"></i> Data siswa tidak ditemukan. Periksa kembali NIS yang dimasukkan.</div>';
+          }
+          btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Cari';
+          btn.disabled = false;
+        }, 800);
+      } else {
+        gasRun('cekStatusPembayaran', nis).then(res => {
+          btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Cari';
+          btn.disabled = false;
+          if (res.success) {
+            renderPublicResult(res.data.siswa, res.data.riwayat);
+          } else {
+            resDiv.innerHTML = `<div class="alert alert-danger py-2 text-center small mb-0"><i class="fa-solid fa-circle-exclamation"></i> ${res.message}</div>`;
+          }
+        }).catch(err => {
+          btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Cari';
+          btn.disabled = false;
+          resDiv.innerHTML = `<div class="alert alert-danger py-2 text-center small mb-0">Kesalahan jaringan atau server.</div>`;
+        });
+      }
+    }
+
+    function renderPublicResult(siswa, riwayat) {
+      var html = `
+        <div class="card bg-success-subtle border-success border-opacity-25 mb-3 rounded-3">
+          <div class="card-body py-2 px-3">
+            <div class="row align-items-center">
+              <div class="col-8">
+                <div class="fw-bold text-success" style="font-size: 1.1rem;">${siswa.nama}</div>
+                <div class="small text-muted">Kelas: ${siswa.kelas} | Status: <span class="badge bg-success">${siswa.status_aktif}</span></div>
+              </div>
+              <div class="col-4 text-end">
+                <div class="small text-muted mb-0">Tarif SPP</div>
+                <div class="fw-bold text-dark">${formatRupiah(siswa.tarif_spp)}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <h6 class="fw-bold text-muted small mb-2">RIWAYAT PEMBAYARAN</h6>
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm small align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Tanggal</th>
+                <th>Detail Transaksi</th>
+                <th class="text-end">Nominal</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      if (riwayat.length === 0) {
+        html += `<tr><td colspan="3" class="text-center text-muted fst-italic">Belum ada riwayat pembayaran tercatat.</td></tr>`;
+      } else {
+        riwayat.forEach(r => {
+          var detail = r.kategori === 'SPP' ? `SPP - ${r.bulan_spp}` : r.kategori;
+          html += `<tr>
+            <td>${safeDate(r.tanggal)}</td>
+            <td class="fw-bold text-dark">${detail}</td>
+            <td class="text-end text-success fw-bold">${formatRupiah(r.nominal)}</td>
+          </tr>`;
+        });
+      }
+      
+      html += `</tbody></table></div>`;
+      document.getElementById('publicSearchResult').innerHTML = html;
+    }
 
     // ==================== NAVIGASI PANEL ====================
     function showPage(pageName, navEl) {

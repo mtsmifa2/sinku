@@ -613,25 +613,49 @@
     }
 
     // --- CRUD ACTIONS ---
-    function openSiswaModal() { document.getElementById('siswaForm').reset(); document.getElementById('sisNisn').disabled=false; new bootstrap.Modal(document.getElementById('siswaModal')).show(); }
+    function openSiswaModal() {
+      document.getElementById('siswaForm').reset();
+      document.getElementById('sisNisn').disabled = false;
+      new bootstrap.Modal(document.getElementById('siswaModal')).show();
+    }
     
     function editSiswa(nisn) {
       var found = dbSiswa.find(x => x.nisn === nisn);
       if(!found) return;
-      document.getElementById('sisNisn').value = found.nisn; document.getElementById('sisNisn').disabled = true;
-      document.getElementById('sisNama').value = found.nama; document.getElementById('sisKelas').value = found.kelas;
-      document.getElementById('sisTarif').value = found.tarif_spp; document.getElementById('sisStatus').value = found.status_aktif;
+      document.getElementById('sisNisn').value = found.nisn; 
+      document.getElementById('sisNisn').disabled = true;
+      document.getElementById('sisNama').value = found.nama; 
+      document.getElementById('sisKelas').value = found.kelas;
+      document.getElementById('sisTarif').value = found.tarif_spp; 
+      document.getElementById('sisStatus').value = found.status_aktif;
       new bootstrap.Modal(document.getElementById('siswaModal')).show();
     }
 
     function submitSiswaForm() {
       var p = { nisn: document.getElementById('sisNisn').value.trim(), nama: document.getElementById('sisNama').value, kelas: document.getElementById('sisKelas').value, tarif_spp: Number(document.getElementById('sisTarif').value), status_aktif: document.getElementById('sisStatus').value };
       var t = {...p, _isSyncing: true};
-      var i = dbSiswa.findIndex(x=>x.nisn === p.nisn); if(i!==-1) dbSiswa[i]=t; else dbSiswa.push(t);
-      renderSiswaTable(); bootstrap.Modal.getInstance(document.getElementById('siswaModal')).hide();
-      gasRun('saveSiswa', p).then(r => fetchSiswaData()).catch(e => { Swal.fire('Error', 'Gagal', 'error'); fetchSiswaData(); });
+      var i = dbSiswa.findIndex(x=>x.nisn === p.nisn); 
+      if(i !== -1) dbSiswa[i] = t; else dbSiswa.push(t);
+      
+      renderSiswaTable(); 
+      bootstrap.Modal.getInstance(document.getElementById('siswaModal')).hide();
+      
+      gasRun('saveSiswa', p).then(r => {
+        if (!SCRIPT_URL) delete t._isSyncing; // Hapus spinner loading simulasi
+        loadPageData('siswa');
+      }).catch(e => {
+        Swal.fire('Error', 'Koneksi ke server gagal.', 'error');
+        if (!SCRIPT_URL) delete t._isSyncing;
+        loadPageData('siswa');
+      });
     }
-    function deleteSiswaAction(nisn) { gasRun('deleteSiswa', nisn).then(() => fetchSiswaData()); }
+
+    function deleteSiswaAction(nisn) {
+      gasRun('deleteSiswa', nisn).then(() => {
+        if (!SCRIPT_URL) dbSiswa = dbSiswa.filter(x => x.nisn !== nisn);
+        loadPageData('siswa');
+      });
+    }
 
     function togglePemasukanFormFields() {
       var kat = document.getElementById('pemKategori').value;
@@ -650,7 +674,8 @@
     }
 
     function openPemasukanModal() {
-      document.getElementById('pemasukanForm').reset(); document.getElementById('pemId').value='';
+      document.getElementById('pemasukanForm').reset(); 
+      document.getElementById('pemId').value = '';
       document.getElementById('pemTanggal').value = new Date().toISOString().substring(0,10);
       document.getElementById('pemNisn').innerHTML = dbSiswa.map(s => `<option value="${s.nisn}">${s.nama} (${s.kelas}) - ${s.nisn}</option>`).join('');
       togglePemasukanFormFields();
@@ -660,27 +685,90 @@
     function submitPemasukanForm() {
       var p = { id_transaksi: document.getElementById('pemId').value, tanggal: document.getElementById('pemTanggal').value, kategori: document.getElementById('pemKategori').value, nisn: document.getElementById('pemNisn').value, bulan_spp: document.getElementById('pemBulanSpp').value, keterangan: document.getElementById('pemKeterangan').value, nominal: Number(document.getElementById('pemNominal').value), operator: currentUser ? currentUser.fullname : 'Sistem' };
       var isIuran = ['SPP', 'Seragam Olahraga', 'Batik', 'Atribut Sekolah', 'Sampul Raport', 'Bangunan'].includes(p.kategori);
-      if(!isIuran) p.nisn = ''; if(p.kategori !== 'SPP') p.bulan_spp = '';
+      if(!isIuran) p.nisn = ''; 
+      if(p.kategori !== 'SPP') p.bulan_spp = '';
       
-      var t = {...p, id_transaksi: p.id_transaksi || 'PM-TEMP', _isSyncing: true}; dbPemasukan.unshift(t);
-      renderPemasukanTable(); bootstrap.Modal.getInstance(document.getElementById('pemasukanModal')).hide();
-      gasRun('savePemasukan', p).then(r => fetchPemasukanData()).catch(e => { Swal.fire('Error', 'Gagal', 'error'); fetchPemasukanData(); });
+      var isNew = !p.id_transaksi;
+      var t = {...p, id_transaksi: p.id_transaksi || 'PM-TEMP', _isSyncing: true}; 
+      
+      if (isNew) dbPemasukan.unshift(t);
+      else { var idx = dbPemasukan.findIndex(x => x.id_transaksi === p.id_transaksi); if(idx !== -1) dbPemasukan[idx] = t; }
+      
+      renderPemasukanTable(); 
+      bootstrap.Modal.getInstance(document.getElementById('pemasukanModal')).hide();
+      
+      gasRun('savePemasukan', p).then(r => {
+        if (!SCRIPT_URL) {
+           delete t._isSyncing;
+           if (isNew) t.id_transaksi = 'PM-' + Date.now().toString().slice(-6);
+        }
+        loadPageData('pemasukan');
+      }).catch(e => {
+        Swal.fire('Error', 'Koneksi ke server gagal.', 'error');
+        if (!SCRIPT_URL) delete t._isSyncing;
+        loadPageData('pemasukan');
+      });
     }
-    function deletePemasukanAction(id) { gasRun('deletePemasukan', id).then(() => fetchPemasukanData()); }
 
-    function openPengeluaranModal() { document.getElementById('pengeluaranForm').reset(); document.getElementById('pengTanggal').value = new Date().toISOString().substring(0,10); new bootstrap.Modal(document.getElementById('pengeluaranModal')).show(); }
-    function submitPengeluaranForm() {
-      var p = { id_pengeluaran: document.getElementById('pengId').value, tanggal: document.getElementById('pengTanggal').value, kategori: document.getElementById('pengKategori').value, uraian: document.getElementById('pengUraian').value, nominal: Number(document.getElementById('pengNominal').value), pj: document.getElementById('pengPj').value, operator: currentUser.fullname };
-      gasRun('savePengeluaran', p).then(r => fetchPengeluaranData()); bootstrap.Modal.getInstance(document.getElementById('pengeluaranModal')).hide();
+    function deletePemasukanAction(id) {
+      gasRun('deletePemasukan', id).then(() => {
+        if (!SCRIPT_URL) dbPemasukan = dbPemasukan.filter(x => x.id_transaksi !== id);
+        loadPageData('pemasukan');
+      });
     }
-    function deletePengeluaranAction(id) { gasRun('deletePengeluaran', id).then(() => fetchPengeluaranData()); }
+
+    function openPengeluaranModal() { 
+      document.getElementById('pengeluaranForm').reset(); 
+      document.getElementById('pengId').value = '';
+      document.getElementById('pengTanggal').value = new Date().toISOString().substring(0,10); 
+      new bootstrap.Modal(document.getElementById('pengeluaranModal')).show(); 
+    }
+
+    function submitPengeluaranForm() {
+      var p = { id_pengeluaran: document.getElementById('pengId').value, tanggal: document.getElementById('pengTanggal').value, kategori: document.getElementById('pengKategori').value, uraian: document.getElementById('pengUraian').value, nominal: Number(document.getElementById('pengNominal').value), pj: document.getElementById('pengPj').value, operator: currentUser ? currentUser.fullname : 'Sistem' };
+      var isNew = !p.id_pengeluaran;
+      var t = {...p, id_pengeluaran: p.id_pengeluaran || 'PL-TEMP', _isSyncing: true};
+      
+      if (isNew) dbPengeluaran.unshift(t);
+      else { var idx = dbPengeluaran.findIndex(x => x.id_pengeluaran === p.id_pengeluaran); if(idx !== -1) dbPengeluaran[idx] = t; }
+      
+      renderPengeluaranTable();
+      bootstrap.Modal.getInstance(document.getElementById('pengeluaranModal')).hide();
+      
+      gasRun('savePengeluaran', p).then(r => {
+        if (!SCRIPT_URL) { delete t._isSyncing; if(isNew) t.id_pengeluaran = 'PL-' + Date.now().toString().slice(-6); }
+        loadPageData('pengeluaran');
+      }).catch(e => {
+        if (!SCRIPT_URL) delete t._isSyncing;
+        loadPageData('pengeluaran');
+      });
+    }
+
+    function deletePengeluaranAction(id) { 
+      gasRun('deletePengeluaran', id).then(() => {
+        if (!SCRIPT_URL) dbPengeluaran = dbPengeluaran.filter(x => x.id_pengeluaran !== id);
+        loadPageData('pengeluaran');
+      }); 
+    }
     
-    function openUserModal() { document.getElementById('userForm').reset(); new bootstrap.Modal(document.getElementById('userModal')).show(); }
+    function openUserModal() { 
+      document.getElementById('userForm').reset(); 
+      document.getElementById('userId').value = '';
+      new bootstrap.Modal(document.getElementById('userModal')).show(); 
+    }
+
     function submitUserForm() {
       var p = { id: document.getElementById('userId').value, nama: document.getElementById('userNama').value, username: document.getElementById('userUsername').value, password: document.getElementById('userPassword').value, role: document.getElementById('userRole').value };
-      gasRun('saveUser', p).then(r => fetchUsersData()); bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+      gasRun('saveUser', p).then(r => loadPageData('users')); 
+      bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
     }
-    function deleteUserAction(id) { gasRun('deleteUser', id).then(() => fetchUsersData()); }
+
+    function deleteUserAction(id) { 
+      gasRun('deleteUser', id).then(() => {
+        if (!SCRIPT_URL) dbUsers = dbUsers.filter(x => x.id !== id);
+        loadPageData('users');
+      }); 
+    }
 
     function printKwitansi(id) {
       var f = dbPemasukan.find(x => x.id_transaksi === id); if(!f) return;

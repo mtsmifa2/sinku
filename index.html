@@ -564,9 +564,60 @@
     }
 
     // --- RENDERERS ---
+    var kasChartInstance = null; // Mencegah glitch grafik bertumpuk
+
     function renderDashboard() {
-      document.getElementById('dashboardSection').innerHTML = `<div class="col-md-3 mb-3"><div class="card card-stat p-3"><div class="d-flex justify-content-between align-items-center"><div><span class="text-muted small fw-semibold">SALDO KAS</span><h4 class="fw-bold mt-1 text-success mb-0">${formatRupiah(statsKeuangan.saldoKas)}</h4></div><div class="icon-box-stat bg-success-subtle text-success"><i class="fa-solid fa-scale-balanced"></i></div></div></div></div><div class="col-md-3 mb-3"><div class="card card-stat p-3"><div class="d-flex justify-content-between align-items-center"><div><span class="text-muted small fw-semibold">PEMASUKAN</span><h4 class="fw-bold mt-1 text-success mb-0">${formatRupiah(statsKeuangan.totalPemasukan)}</h4></div><div class="icon-box-stat bg-success-subtle text-success"><i class="fa-solid fa-circle-arrow-down"></i></div></div></div></div><div class="col-md-3 mb-3"><div class="card card-stat p-3"><div class="d-flex justify-content-between align-items-center"><div><span class="text-muted small fw-semibold">PENGELUARAN</span><h4 class="fw-bold mt-1 text-danger mb-0">${formatRupiah(statsKeuangan.totalPengeluaran)}</h4></div><div class="icon-box-stat bg-danger-subtle text-danger"><i class="fa-solid fa-circle-arrow-up"></i></div></div></div></div><div class="col-md-3 mb-3"><div class="card card-stat p-3"><div class="d-flex justify-content-between align-items-center"><div><span class="text-muted small fw-semibold">TARGET SPP</span><h4 class="fw-bold mt-1 text-warning mb-0">${statsKeuangan.realisasiSpp}%</h4></div><div class="icon-box-stat bg-warning-subtle text-warning"><i class="fa-solid fa-chart-line"></i></div></div></div></div><div class="col-lg-7 mb-4"><div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h6 class="fw-bold text-muted mb-3">TREN ARUS KAS</h6><div style="height:280px;"><canvas id="kasChart"></canvas></div></div></div><div class="col-lg-5 mb-4"><div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h6 class="fw-bold text-muted mb-3">LOG TRANSAKSI</h6><div class="table-responsive"><table class="table align-middle table-borderless table-hover small"><tbody>${logsAktivitas.map(x => `<tr><td>${safeDate(x.tanggal)}</td><td><div class="fw-bold text-truncate" style="max-width:180px;">${x.keterangan || x.kategori}</div><span class="badge ${x.tipe === 'Pemasukan' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}">${x.kategori}</span></td><td class="text-end fw-bold ${x.tipe === 'Pemasukan' ? 'text-success' : 'text-danger'}">${x.tipe === 'Pemasukan' ? '+' : '-'}${formatRupiah(x.nominal)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
-      new Chart(document.getElementById('kasChart').getContext('2d'), { type: 'line', data: { labels: ['Mar', 'Apr', 'Mei', 'Jun', 'Jul'], datasets: [{ label: 'Pemasukan', data: [12000000, 15000000, 14000000, 20000000, statsKeuangan.totalPemasukan], borderColor: '#198754', fill: true }, { label: 'Pengeluaran', data: [8000000, 11000000, 9500000, 15000000, statsKeuangan.totalPengeluaran], borderColor: '#dc3545', fill: true }] }, options: { responsive: true, maintainAspectRatio: false } });
+      // 1. Algoritma Perhitungan Data Grafik Dinamis (6 Bulan Terakhir)
+      var monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+      var chartLabels = [];
+      var monthKeys = [];
+      var dataPemasukan = [0, 0, 0, 0, 0, 0];
+      var dataPengeluaran = [0, 0, 0, 0, 0, 0];
+      
+      var today = new Date();
+      // Generate label bulan mundur ke belakang
+      for (var i = 5; i >= 0; i--) {
+        var d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        chartLabels.push(monthNames[d.getMonth()]);
+        var mStr = (d.getMonth() + 1).toString().padStart(2, '0');
+        monthKeys.push(d.getFullYear() + '-' + mStr); // Format "YYYY-MM"
+      }
+
+      // Kelompokkan pemasukan sesuai bulan
+      dbPemasukan.forEach(function(x) {
+        if(!x.tanggal) return;
+        var yyyymm = x.tanggal.substring(0, 7); 
+        var idx = monthKeys.indexOf(yyyymm);
+        if(idx !== -1) dataPemasukan[idx] += Number(x.nominal) || 0;
+      });
+
+      // Kelompokkan pengeluaran sesuai bulan
+      dbPengeluaran.forEach(function(x) {
+        if(!x.tanggal) return;
+        var yyyymm = x.tanggal.substring(0, 7);
+        var idx = monthKeys.indexOf(yyyymm);
+        if(idx !== -1) dataPengeluaran[idx] += Number(x.nominal) || 0;
+      });
+
+      // 2. Render Kerangka HTML Dasbor
+      document.getElementById('dashboardSection').innerHTML = `<div class="col-md-3 mb-3"><div class="card card-stat p-3"><div class="d-flex justify-content-between align-items-center"><div><span class="text-muted small fw-semibold">SALDO KAS</span><h4 class="fw-bold mt-1 text-success mb-0">${formatRupiah(statsKeuangan.saldoKas)}</h4></div><div class="icon-box-stat bg-success-subtle text-success"><i class="fa-solid fa-scale-balanced"></i></div></div></div></div><div class="col-md-3 mb-3"><div class="card card-stat p-3"><div class="d-flex justify-content-between align-items-center"><div><span class="text-muted small fw-semibold">PEMASUKAN</span><h4 class="fw-bold mt-1 text-success mb-0">${formatRupiah(statsKeuangan.totalPemasukan)}</h4></div><div class="icon-box-stat bg-success-subtle text-success"><i class="fa-solid fa-circle-arrow-down"></i></div></div></div></div><div class="col-md-3 mb-3"><div class="card card-stat p-3"><div class="d-flex justify-content-between align-items-center"><div><span class="text-muted small fw-semibold">PENGELUARAN</span><h4 class="fw-bold mt-1 text-danger mb-0">${formatRupiah(statsKeuangan.totalPengeluaran)}</h4></div><div class="icon-box-stat bg-danger-subtle text-danger"><i class="fa-solid fa-circle-arrow-up"></i></div></div></div></div><div class="col-md-3 mb-3"><div class="card card-stat p-3"><div class="d-flex justify-content-between align-items-center"><div><span class="text-muted small fw-semibold">TARGET SPP</span><h4 class="fw-bold mt-1 text-warning mb-0">${statsKeuangan.realisasiSpp}%</h4></div><div class="icon-box-stat bg-warning-subtle text-warning"><i class="fa-solid fa-chart-line"></i></div></div></div></div><div class="col-lg-7 mb-4"><div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h6 class="fw-bold text-muted mb-3">TREN ARUS KAS (6 BULAN TERAKHIR)</h6><div style="height:280px;"><canvas id="kasChart"></canvas></div></div></div><div class="col-lg-5 mb-4"><div class="card border-0 shadow-sm rounded-4 p-4 h-100"><h6 class="fw-bold text-muted mb-3">LOG TRANSAKSI</h6><div class="table-responsive"><table class="table align-middle table-borderless table-hover small"><tbody>${logsAktivitas.map(x => `<tr><td>${safeDate(x.tanggal)}</td><td><div class="fw-bold text-truncate" style="max-width:180px;">${x.keterangan || x.kategori}</div><span class="badge ${x.tipe === 'Pemasukan' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}">${x.kategori}</span></td><td class="text-end fw-bold ${x.tipe === 'Pemasukan' ? 'text-success' : 'text-danger'}">${x.tipe === 'Pemasukan' ? '+' : '-'}${formatRupiah(x.nominal)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
+      
+      // 3. Render ChartJS berdasarkan array dinamis
+      var ctx = document.getElementById('kasChart');
+      if (ctx) {
+        if (kasChartInstance) kasChartInstance.destroy(); // Cegah bug canvas memory leak
+        kasChartInstance = new Chart(ctx.getContext('2d'), {
+          type: 'line', 
+          data: { 
+            labels: chartLabels, 
+            datasets: [
+              { label: 'Pemasukan', data: dataPemasukan, borderColor: '#198754', backgroundColor: 'rgba(25, 135, 84, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }, 
+              { label: 'Pengeluaran', data: dataPengeluaran, borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', borderWidth: 2, fill: true, tension: 0.3 }
+            ] 
+          }, 
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } 
+        });
+      }
     }
 
     function renderSiswaTable() {

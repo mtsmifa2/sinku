@@ -1,75 +1,24 @@
-// --- PEMASUKAN CRUD ---
-    function togglePemasukanFormFields() {
-      var kat = document.getElementById('pemKategori').value;
-      var fSiswa = document.getElementById('fieldPemSiswa');
-      var fBulan = document.getElementById('fieldPemBulan');
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SINKU - MTs. Miftahul Falah 2</title>
+  
+  <!-- CSS: Bootstrap 5, FontAwesome, Google Fonts, SweetAlert2 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-      // Ambil elemen optgroup jika isIuranSiswa
-      var isIuran = ['SPP', 'Seragam Olahraga', 'Batik', 'Atribut Sekolah', 'Sampul Raport', 'Bangunan'].includes(kat);
-
-      if (isIuran) {
-        fSiswa.classList.remove('d-none');
-      } else {
-        fSiswa.classList.add('d-none');
-      }
-
-      if (kat === 'SPP') {
-        fBulan.classList.remove('d-none');
-      } else {
-        fBulan.classList.add('d-none');
-      }
-    }
-
-    function autoFillSppNominal() {
-      var kat = document.getElementById('pemKategori').value;
-      var isIuran = ['SPP', 'Seragam Olahraga', 'Batik', 'Atribut Sekolah', 'Sampul Raport', 'Bangunan'].includes(kat);
-      
-      if (!isIuran) return;
-      
-      var nisn = document.getElementById('pemNisn').value;
-      var found = dbSiswa.find(s => s.nisn === nisn);
-      
-      if (found) {
-        // Jika SPP, auto fill sesuai tarif siswa
-        if (kat === 'SPP') {
-          document.getElementById('pemNominal').value = found.tarif_spp;
-        } 
-        // Anda juga bisa menyesuaikan tarif default lainnya disini jika diperlukan
-      }
-    }
-
-    function openPemasukanModal(defaultKat) {
-      document.getElementById('pemasukanForm').reset();
-      document.getElementById('pemId').value = '';
-      document.getElementById('pemTanggal').value = new Date().toISOString().substring(0, 10);
-      
-      // Mengisi Tahun saat ini secara otomatis
-      var currentYear = new Date().getFullYear();
-      var inputTahun = document.getElementById('pemTahunSpp');
-      if(inputTahun) { inputTahun.value = currentYear; }
-      
-      // Populate Siswa Dropdown
-      var drop = document.getElementById('pemNisn');
-      if (dbSiswa.length > 0) {
-        drop.innerHTML = dbSiswa.map(s => `<option value="${s.nisn}">${s.nama} (${s.kelas}) - ${s.nisn}</option>`).join('');
-      } else {
-         drop.innerHTML = `<option value="">-- Belum ada data siswa --</option>`;
-      }
-
-      if (defaultKat) {
-        var katSelect = document.getElementById('pemKategori');
-        // Pastikan opsi yang direquest ada
-        var optionExists = Array.from(katSelect.options).some(opt => opt.value === defaultKat);
-        if(optionExists) {
-           katSelect.value = defaultKat;
-        }
-      }
-      
-      togglePemasukanFormFields();
-      if (defaultKat === 'SPP') autoFillSppNominal();
-
-      var modal = new bootstrap.Modal(document.getElementById('pemasukanModal'));
-      modal.show();
+  <style>
+    :root {
+      --primary-color: #0f5132;     /* Hijau Zamrud Tua */
+      --secondary-color: #198754;   /* Hijau Zamrud Terang */
+      --accent-color: #ffc107;      /* Gold Aksen */
+      --bg-off-white: #f8f9fa;      /* Off-White */
+      --sidebar-width: 260px;
     }
 
     body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-off-white); color: #333; overflow-x: hidden; }
@@ -273,7 +222,7 @@
           <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
               <div><h5 class="fw-bold mb-1">Penerimaan & Iuran Siswa</h5><p class="text-muted small mb-0">Pencatatan SPP Bulanan & Dana Masuk Lainnya (BOS, Sumbangan, dll).</p></div>
-              <button class="btn btn-success d-flex align-items-center gap-2" onclick="openPemasukanModal()"><i class="fa-solid fa-plus"></i> Catat Penerimaan</button>
+              <button type="button" class="btn btn-success d-flex align-items-center gap-2" onclick="openPemasukanModal()"><i class="fa-solid fa-plus"></i> Catat Penerimaan</button>
             </div>
             <div id="pemasukanTableContainer" class="table-responsive"></div>
           </div>
@@ -379,13 +328,16 @@
               <select id="pemNisn" class="form-select" onchange="autoFillSppNominal()"></select>
             </div>
             <div class="mb-3 d-none" id="fieldPemBulan">
-              <label class="form-label small fw-bold">Bulan SPP (Jika SPP)</label>
-              <select id="pemBulanSpp" class="form-select">
-                <option value="Januari">Januari</option><option value="Februari">Februari</option><option value="Maret">Maret</option>
-                <option value="April">April</option><option value="Mei">Mei</option><option value="Juni">Juni</option>
-                <option value="Juli">Juli</option><option value="Agustus">Agustus</option><option value="September">September</option>
-                <option value="Oktober">Oktober</option><option value="November">November</option><option value="Desember">Desember</option>
-              </select>
+              <label class="form-label small fw-bold">Bulan & Tahun SPP</label>
+              <div class="input-group">
+                <select id="pemBulanSpp" class="form-select">
+                  <option value="Januari">Januari</option><option value="Februari">Februari</option><option value="Maret">Maret</option>
+                  <option value="April">April</option><option value="Mei">Mei</option><option value="Juni">Juni</option>
+                  <option value="Juli">Juli</option><option value="Agustus">Agustus</option><option value="September">September</option>
+                  <option value="Oktober">Oktober</option><option value="November">November</option><option value="Desember">Desember</option>
+                </select>
+                <input type="number" id="pemTahunSpp" class="form-control" placeholder="Tahun (Contoh: 2026)" required min="2020" max="2099">
+              </div>
             </div>
             <div class="mb-3"><label class="form-label small fw-bold">Nominal (Rp)</label><input type="number" id="pemNominal" class="form-control" required></div>
             <div class="mb-3"><label class="form-label small fw-bold">Keterangan Tambahan</label><textarea id="pemKeterangan" class="form-control" rows="2"></textarea></div>
@@ -456,7 +408,7 @@
     var statsKeuangan = { saldoKas: 0, totalPemasukan: 0, totalPengeluaran: 0, realisasiSpp: 0 };
     var logsAktivitas = [];
 
-    // MOCK DATA MENGGUNAKAN NISN & ANGKA 0 DI DEPAN (Untuk Preview Offline)
+    // MOCK DATA MENGGUNAKAN NISN (Untuk Preview Offline)
     var mockSiswa = [
       { nisn: '00121101', nama: 'Ahmad Fauzi', kelas: 'X-A', tarif_spp: 150000, status_aktif: 'Aktif' },
       { nisn: '00121102', nama: 'Siti Aminah', kelas: 'XI-B', tarif_spp: 150000, status_aktif: 'Aktif' },
@@ -475,7 +427,10 @@
     function gasRun(action) {
       var args = Array.prototype.slice.call(arguments, 1);
       return new Promise(function(resolve, reject) {
-        if (!SCRIPT_URL) { reject("API Kosong, Menjalankan Simulasi"); return; }
+        if (!SCRIPT_URL) {
+           resolve({ success: true, message: "Simulasi berhasil" });
+           return; 
+        }
         fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: action, args: args }) })
         .then(res => res.json()).then(resolve).catch(reject);
       });
@@ -607,6 +562,7 @@
 
     function formatRupiah(num) { return 'Rp ' + Number(num).toLocaleString('id-ID'); }
     function safeDate(val) { if (!val) return '-'; if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) return val.substring(0, 10); try { var d = new Date(val); return isNaN(d.getTime()) ? '-' : d.toISOString().substring(0, 10); } catch (e) { return '-'; } }
+    
     function calculateMockStats() {
       var i = 0, o = 0; dbPemasukan.forEach(x => i += x.nominal); dbPengeluaran.forEach(x => o += x.nominal);
       statsKeuangan = { saldoKas: i - o, totalPemasukan: i, totalPengeluaran: o, realisasiSpp: 85 };
@@ -695,6 +651,7 @@
 
     function renderPengeluaranTable() {
       var c = document.getElementById('pengeluaranTableContainer');
+      if (dbPengeluaran.length === 0) { c.innerHTML = `<div class="text-center py-5 text-muted">Belum ada pengeluaran</div>`; return; }
       c.innerHTML = `<table class="table align-middle table-hover"><thead><tr class="table-light"><th>Tgl</th><th>Kategori</th><th>Uraian</th><th class="text-end">Nominal</th><th>Opsi</th></tr></thead><tbody>${dbPengeluaran.map(item => `<tr class="${item._isSyncing ? 'opacity-60' : ''}"><td>${safeDate(item.tanggal)}</td><td><span class="badge bg-danger-subtle text-danger border border-danger">${item.kategori}</span></td><td><div class="fw-bold">${item.uraian}</div><small class="text-muted">PJ: ${item.pj}</small></td><td class="text-end fw-bold text-danger">${formatRupiah(item.nominal)}</td><td>${item._isSyncing ? `<span class="spinner-border spinner-border-sm text-danger"></span>` : `<button class="btn btn-sm text-danger" onclick="deletePengeluaranAction('${item.id_pengeluaran}')"><i class="fa-solid fa-trash"></i></button>`}</td></tr>`).join('')}</tbody></table>`;
     }
 
@@ -743,10 +700,13 @@
       bootstrap.Modal.getInstance(document.getElementById('siswaModal')).hide();
       
       gasRun('saveSiswa', p).then(r => {
-        if (!SCRIPT_URL) delete t._isSyncing; // Hapus spinner loading simulasi
-        loadPageData('siswa');
+        if (!SCRIPT_URL) {
+            delete t._isSyncing;
+            loadPageData('siswa');
+        } else {
+            loadPageData('siswa');
+        }
       }).catch(e => {
-        Swal.fire('Error', 'Koneksi ke server gagal.', 'error');
         if (!SCRIPT_URL) delete t._isSyncing;
         loadPageData('siswa');
       });
@@ -775,14 +735,35 @@
       if(s) document.getElementById('pemNominal').value = s.tarif_spp;
     }
 
-    function openPemasukanModal() {
+    function openPemasukanModal(defaultKat) {
       document.getElementById('pemasukanForm').reset(); 
       document.getElementById('pemId').value = '';
       document.getElementById('pemTanggal').value = new Date().toISOString().substring(0,10);
-      document.getElementById('pemTahunSpp').value = new Date().getFullYear(); // Otomatis isi tahun saat ini
-      document.getElementById('pemNisn').innerHTML = dbSiswa.map(s => `<option value="${s.nisn}">${s.nama} (${s.kelas}) - ${s.nisn}</option>`).join('');
+      
+      var currentYear = new Date().getFullYear();
+      var inputTahun = document.getElementById('pemTahunSpp');
+      if(inputTahun) { inputTahun.value = currentYear; }
+      
+      var drop = document.getElementById('pemNisn');
+      if (dbSiswa.length > 0) {
+        drop.innerHTML = dbSiswa.map(s => `<option value="${s.nisn}">${s.nama} (${s.kelas}) - ${s.nisn}</option>`).join('');
+      } else {
+         drop.innerHTML = `<option value="">-- Belum ada data siswa --</option>`;
+      }
+
+      if (defaultKat) {
+        var katSelect = document.getElementById('pemKategori');
+        var optionExists = Array.from(katSelect.options).some(opt => opt.value === defaultKat);
+        if(optionExists) {
+           katSelect.value = defaultKat;
+        }
+      }
+      
       togglePemasukanFormFields();
-      new bootstrap.Modal(document.getElementById('pemasukanModal')).show();
+      if (defaultKat === 'SPP' || !defaultKat) autoFillSppNominal();
+
+      var modal = new bootstrap.Modal(document.getElementById('pemasukanModal'));
+      modal.show();
     }
 
     function submitPemasukanForm() {
@@ -819,7 +800,6 @@
         }
         loadPageData('pemasukan');
       }).catch(e => {
-        Swal.fire('Error', 'Koneksi ke server gagal.', 'error');
         if (!SCRIPT_URL) delete t._isSyncing;
         loadPageData('pemasukan');
       });
@@ -874,8 +854,21 @@
 
     function submitUserForm() {
       var p = { id: document.getElementById('userId').value, nama: document.getElementById('userNama').value, username: document.getElementById('userUsername').value, password: document.getElementById('userPassword').value, role: document.getElementById('userRole').value };
-      gasRun('saveUser', p).then(r => loadPageData('users')); 
+      
+      var isNew = !p.id;
+      var t = {...p, id: p.id || 'USR-TEMP', _isSyncing: true};
+      if(isNew) dbUsers.push(t);
+      else { var idx = dbUsers.findIndex(x=>x.id===p.id); if(idx!==-1) dbUsers[idx] = t; }
+      renderUsersTable();
       bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+
+      gasRun('saveUser', p).then(r => {
+        if(!SCRIPT_URL) { delete t._isSyncing; if(isNew) t.id = 'USR-' + Date.now().toString().slice(-4); }
+        loadPageData('users');
+      }).catch(e => {
+        if(!SCRIPT_URL) delete t._isSyncing;
+        loadPageData('users');
+      });
     }
 
     function deleteUserAction(id) { 
@@ -898,6 +891,7 @@
       document.getElementById('kwNominal').innerText = formatRupiah(f.nominal);
       new bootstrap.Modal(document.getElementById('kwitansiModal')).show();
     }
+    
     function printElement(elId) { var pc = document.getElementById(elId).innerHTML; var oc = document.body.innerHTML; document.body.innerHTML = `<div style="padding:40px;max-width:480px;margin:0 auto;border:1px solid #eee;font-family:sans-serif;">${pc}</div>`; window.print(); document.body.innerHTML = oc; window.location.reload(); }
   </script>
 </body>

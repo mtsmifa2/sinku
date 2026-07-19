@@ -728,13 +728,26 @@
       document.getElementById('pemasukanForm').reset(); 
       document.getElementById('pemId').value = '';
       document.getElementById('pemTanggal').value = new Date().toISOString().substring(0,10);
+      document.getElementById('pemTahunSpp').value = new Date().getFullYear(); // Otomatis isi tahun saat ini
       document.getElementById('pemNisn').innerHTML = dbSiswa.map(s => `<option value="${s.nisn}">${s.nama} (${s.kelas}) - ${s.nisn}</option>`).join('');
       togglePemasukanFormFields();
       new bootstrap.Modal(document.getElementById('pemasukanModal')).show();
     }
 
     function submitPemasukanForm() {
-      var p = { id_transaksi: document.getElementById('pemId').value, tanggal: document.getElementById('pemTanggal').value, kategori: document.getElementById('pemKategori').value, nisn: document.getElementById('pemNisn').value, bulan_spp: document.getElementById('pemBulanSpp').value, keterangan: document.getElementById('pemKeterangan').value, nominal: Number(document.getElementById('pemNominal').value), operator: currentUser ? currentUser.fullname : 'Sistem' };
+      var bulanSppFull = document.getElementById('pemBulanSpp').value + ' ' + document.getElementById('pemTahunSpp').value;
+      
+      var p = { 
+        id_transaksi: document.getElementById('pemId').value, 
+        tanggal: document.getElementById('pemTanggal').value, 
+        kategori: document.getElementById('pemKategori').value, 
+        nisn: document.getElementById('pemNisn').value, 
+        bulan_spp: bulanSppFull, 
+        keterangan: document.getElementById('pemKeterangan').value, 
+        nominal: Number(document.getElementById('pemNominal').value), 
+        operator: currentUser ? currentUser.fullname : 'Sistem' 
+      };
+      
       var isIuran = ['SPP', 'Seragam Olahraga', 'Batik', 'Atribut Sekolah', 'Sampul Raport', 'Bangunan'].includes(p.kategori);
       if(!isIuran) p.nisn = ''; 
       if(p.kategori !== 'SPP') p.bulan_spp = '';
